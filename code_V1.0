@@ -1,0 +1,126 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Jan 27 11:35:33 2018
+
+@author: Keddy
+"""
+
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv('Batting.csv')
+df.head()
+df.info()
+playerInfo = df[['playerID','nameFirst','nameLast','birthYear']].drop_duplicates()
+df['PA']=df['AB']+df['BB']+df['IBB']+df['SH']+df['SF']
+df['OBP'] = (df['H']+df['BB']+df['IBB']+df['SH']+df['SF'])/df['AB']
+df['Average'] = df['H']/df['AB']
+#3) How many players have hit 40 or more HRs in one single season? (Number only)¶
+g_SumSeason = df.groupby(['playerID', 'yearID'], as_index = False).sum()    # sort by player and season                                      # the sum of each season per player
+len(g_SumSeason[g_SumSeason['HR']>=40])                            # the number of players who hit 40 or more HRs per season
+
+#4) How many players have hit more than 600 HRs for their career? (Dataframe)
+g_SumID = df.groupby('playerID', as_index = False).sum()                    # sort by player
+g =g_SumID[g_SumID['HR']>600][['playerID','HR']]                   # players who hit more than 600 HRs for their career
+g.columns = ['playerID','Total_HR']
+pd.merge(playerInfo,g)
+
+#5)	How many players have hit 40 2Bs, 10 3Bs,
+# 200 Hits, and 30 HRs (inclusive) in one season? (Number Only)
+len(g_SumSeason[(g_SumSeason['2B']>=40) & (g_SumSeason['3B']>=10) &(g_SumSeason['H']>=200) &(g_SumSeason['HR']>=30)])
+
+#6)	How many players have had 100 or more SBs in a season? (Dataframe)
+g = g_SumSeason[g_SumSeason['SB']>=100][['playerID','yearID']]
+pd.merge(playerInfo,g)
+
+#7)	How many players in the 1960s have hit more than 200 HRs? (Dataframe)
+g_1960sHRs = g_SumSeason[(g_SumSeason['yearID']>=1960)& (g_SumSeason['yearID']<1970)].groupby('playerID',as_index = False).sum()[['playerID','HR','yearID','stint']]
+g = g_1960sHRs[g_1960sHRs['HR']>200]                              # players who had hit more than 200 HRs
+g.columns = ['playerID','1960s_HRs','yearID']
+pd.merge(playerInfo,g)
+
+#8)	Who has hit the most HRs in history? (Dataframe)
+g = g_SumID[g_SumID['HR'] == max(g_SumID['HR'])][['playerID','HR']]                    # player who had the most HRs
+g.columns = ['playerID','Total_HRs']
+pd.merge(playerInfo, g)
+
+#9)	Who had the most hits in the 1970s? (Dataframe)
+g_1970sHs = g_SumSeason[(g_SumSeason['yearID']>=1970)& (g_SumSeason['yearID']<1980)].groupby('playerID',as_index = False).sum()[['playerID','H']]
+g = g_1970sHs[g_1970sHs['H']==max(g_1970sHs['H'])]                              # players who had hit more than 200 HRs
+g.columns = ['playerID','1970s_Hs']
+pd.merge(playerInfo,g)
+
+#10)	Top 5 highest OBP (on base percentage) with at least 500 PAs in 1977?  (Dataframe)
+g = g_SumSeason[(g_SumSeason['yearID'] == 1977) & (g_SumSeason['PA']>= 500)][['playerID','yearID','PA','OBP']]
+pd.merge(playerInfo,g.sort_values('OBP')[-5:]).sort_values('OBP',ascending = False)
+
+#11)	Top 8 highest averages in 2013 with at least 300 PAs? (Dataframe)
+g = g_SumSeason[(g_SumSeason['yearID'] == 2013) & (g_SumSeason['PA']>= 300)][['playerID','yearID','PA','Average']]
+pd.merge(playerInfo,g.sort_values('Average')[-8:]).sort_values('Average',ascending = False)
+
+#12)	Leaders in hits from 1940 up to and including 1949. (Dataframe)
+g = pd.DataFrame({'playerID' : []})
+for i in np.arange(1940, 1950):
+    g1 = g_SumSeason[g_SumSeason['yearID'] == i][['playerID','yearID','H']]
+    g1 = g1[g1['H']==max(g1['H'])]
+    g = g.append(g1)
+pd.merge(playerInfo,g).sort_values('yearID')
+
+#13)	Who led MLB with the most hits the most times?  And how many times?  (Dataframe, Number)
+
+#14) Which players have played the most games for their careers? Top 5, descending by games played presented as a dataframe
+g = df.groupby('playerID',as_index = False).count()[['playerID','yearID']]
+g.columns = ['playerID','Totel_played']
+pd.merge(playerInfo,g.sort_values('Totel_played')[-5:])
+
+#15) How many players have had more than 3000 hits for their careers while also hitting 500 or more HRs? Just a number is okay here
+len(g_SumID[(g_SumID['H']>3000) & (g_SumID['HR']>=500)])
+
+#16) How many HRs were hit during the entire 1988 season? Just a number is okay here
+g_SumSeason[g_SumSeason['yearID']==1988]['HR'].sum()
+
+#17) Please filter out and show me the top 3 average seasons by Wade Boggs during his career in seasons in which he had at least 500 ABs. I would like a dataframe sorted by average
+player = playerInfo[(playerInfo['nameFirst']=='Wade') & (playerInfo['nameLast']=='Boggs')]
+g = g_SumSeason[g_SumSeason['playerID']==str(player['playerID']).split()[1]]
+g = g[g['AB']>=500].sort_values('Average',ascending = False)[:3]
+pd.merge(playerInfo,g[['playerID','AB','Average']]).sort_values('Average', ascending = False)
+
+#18) Please filter out the top OBPs for the 1995 season with at least 400 PAs, sorted by OBP. I would like a dataframe for this¶
+g = g_SumSeason[(g_SumSeason['yearID']==1995) & (g_SumSeason['PA']>=400)][['playerID','yearID','PA','OBP']]
+pd.merge(playerInfo,g).sort_values('OBP',ascending = False)
+
+#19) Who had the most 3Bs (in total) in 1922, 1925, 1926, and 1928? I would like a dataframe with just the leader
+g = pd.DataFrame({'playerID' : []})
+for i in [1992,1925,1926,1928]:
+    g1 = g_SumSeason[g_SumSeason['yearID'] ==i]
+    g1 = g1[g1['3B']==max(g1['3B'])]
+    g = g.append(g1)
+    
+pd.merge(playerInfo,g[g['3B']==max(g['3B'])][['playerID','3B']])
+
+#20) How many players have hit 30 or more HRs in season while also stealing (SB) 30 more or bases? A number is okay here
+len(g_SumSeason[(g_SumSeason['HR']>=30) & (g_SumSeason['SB']>=30)])
+
+#21) Who had the highest OBP is 1986 with at least 400 PAs? (Dataframe)
+pd.merge(playerInfo,g_SumSeason[(g_SumSeason['yearID']== 1986)& (g_SumSeason['PA']>=400)].sort_values('OBP')[['playerID','yearID','PA','OBP']][-1:])
+
+#22) Same question but for 1997 and only in the NL (check league ID)? (Dataframe)¶
+pd.merge(playerInfo,df[(df['yearID']== 1997)& (df['lgID']=='NL')][['playerID','yearID','lgID','OBP']].replace([np.inf, -np.inf], np.nan).dropna(axis = 0, how = 'any').sort_values('OBP')[-1:])
+
+#23) Who had more than the league average HRs in 2012 (filter out all players with less 500 PAs)? (Dataframe)
+g_MeanLeague = df[df['yearID'] == 2012].groupby('lgID', as_index = False).mean()[['lgID','HR']]
+g_MeanLeague.columns = ['lgID','Average_HR']
+player = df[(df['yearID'] == 2012) &(df['PA']>= 500) ][['playerID','lgID','HR']]
+g = pd.DataFrame({'playerID' : []})
+for i in range(len(g_MeanLeague)):
+    g = g.append(player[(player['lgID']==str(g_MeanLeague['lgID'][i:i+1]).split()[1])& (player['HR']>float(g_MeanLeague['Average_HR'][i:i+1]))].merge(g_MeanLeague,how = 'left'))
+pd.merge(playerInfo,g)
+
+#24) Who is the youngest player to hit 50 or more HRs in a single season? (Dataframe)
+g = g_SumSeason[g_SumSeason['HR']>=50]
+pd.merge(playerInfo,g[g['birthYear']==max(g['birthYear'])][['playerID','HR']])
+
+#25) Who are the five youngest players to hit 300 or more HRs for their career? (Dataframe)¶
+g = g_SumID[g_SumID['HR']>=300][['playerID','HR']]
+g.columns = ['playerID','Total_HR']
+g.merge(playerInfo).sort_values('birthYear',ascending = False)[:8]
