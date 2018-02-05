@@ -1,0 +1,81 @@
+#3) How many players have hit 40 or more HRs in one single season? (Number only)
+  Wrong. There are duplicates since player may hit 40 or more HRs in more than one season.
+  Correct Answer:                            
+  len(g_SumSeason[g_SumSeason['HR']>=40].drop_duplicates('playerID'))    
+  OR:
+  len(set(g_SumSeason[g_SumSeason['HR']>=40]['playerID']))
+  
+#5) How many players have hit 40 2Bs, 10 3Bs, 200 Hits, and 30 HRs (inclusive) in one season? (Number Only)
+  Wrong. Duplicates.
+  Correct Answer:
+  len(g_SumSeason[(g_SumSeason['2B']>=40) & (g_SumSeason['3B']>=10) &(g_SumSeason['H']>=200) &(g_SumSeason['HR']>=30)].drop_duplicates('playerID))
+
+#6) How many players have had 100 or more SBs in a season? (Dataframe)
+  Wrong. Duplicates.
+  Correct Answer:
+  g = g_SumSeason[g_SumSeason['SB']>=100][['playerID','yearID']].drop_duplicates('playerID')
+  
+#7)  How many players in the 1960s have hit more than 200 HRs? (Dataframe)
+  Wrong. Duplicates.
+  Correct Answer:
+  g = df[(df['yearID'] >=1960) & (df['yearID'] <1970)].groupby('playerID',as_index = False).sum()[['playerID','HR']]
+  g.columns=['playerID','Total_HR']
+  g[g['Total_HR']>200].merge(playerInfo)
+  
+#8) Who has hit the most HRs in history? (Dataframe)
+  Wrong. Most HRs is not the sum of HRs.
+  Correct Answer:
+  df[df['HR']== max(df['HR'])]
+  
+#9)Who had the most hits in the 1970s? (Dataframe)
+  Wrong. Most hits is not the sum of hits.
+  Correct Answer:
+  g = df[(df['yearID']>=1970) & (df['yearID']<1980)]
+  g[g['H']== max(g['H'])]
+  
+#10) Top 5 highest OBP (on base percentage) with at least 500 PAs in 1977? (Dataframe)
+  Wrong. OBP is not calculate by cumulate.
+  g = g_SumSeason[(g_SumSeason['yearID'] == 1977) & (g_SumSeason['PA']>= 500)]
+  g['OBP'] = (g['H']+g['BB']+g['IBB']+g['SH']+g['SF'])/g['AB']
+  pd.merge(playerInfo,g[['playerID','yearID','PA','OBP']].sort_values('OBP')[-5:]).sort_values('OBP',ascending = False)
+
+#11) Top 8 highest averages in 2013 with at least 300 PAs? (Dataframe)
+  Wrong. Average is not calculate by cumulate.
+  g = g_SumSeason[(g_SumSeason['yearID'] == 2013) & (g_SumSeason['PA']>= 300)]
+  g['Average'] = g['H']/g['AB']
+  pd.merge(playerInfo,g[['playerID','yearID','PA','Average']].sort_values('Average')[-8:]).sort_values('Average',ascending = False)
+
+#13) Who led MLB with the most hits the most times? And how many times? (Dataframe, Number)
+  What is MLB...
+  
+#17)
+  Wrong.
+  player = playerInfo[(playerInfo['nameFirst']=='Wade') & (playerInfo['nameLast']=='Boggs')]
+  g = g_SumSeason[g_SumSeason['playerID']==str(player['playerID']).split()[1]]
+  g = g[g['AB']>=500]
+  g['Averge']= g['H']/g['AB']
+  g = g.sort_values('Average',ascending = False)[:3]
+  pd.merge(playerInfo,g[['playerID','AB','Average']]).sort_values('Average', ascending = False)
+
+#19)
+  Wrong.
+  g = pd.DataFrame({'playerID' : []})
+  for i in [1992,1925,1926,1928]:
+    g = g.append(g_SumSeason[g_SumSeason['yearID'] ==i][['playerID','3B']])
+  g = g.groupby('playerID',as_index = False).sum()
+  g.columns= ['playerID','Total_3Bs']
+  pd.merge(playerInfo,g[g['Total_3Bs']==max(g['Total_3Bs'])])
+  
+#20)
+  Wrong. Duplicates.
+  len(g_SumSeason[(g_SumSeason['HR']>=30) & (g_SumSeason['SB']>=30)].drop_duplicates('playerID'))
+  
+#21)
+  Wrong. OBP
+  g = g_SumSeason[(g_SumSeason['yearID']== 1986)& (g_SumSeason['PA']>=400)]
+  g['OBP'] = (g['H']+g['BB']+g['IBB']+g['SH']+g['SF'])/g['AB']
+  pd.merge(playerInfo,g.sort_values('OBP')[['playerID','yearID','PA','OBP']][-1:])
+
+#22)
+  Wrong. OBP
+  
