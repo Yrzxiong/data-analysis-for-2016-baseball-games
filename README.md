@@ -35,5 +35,7 @@ Using a line graph please graph the average HRs per AB (think about this) per se
 ### Dataset:
 The Lahman Baseball Database
 2016 Version
+We will use the batting.csv file.
+
 You can find it online: http://www.seanlahman.com/baseball-archive/statistics/  2016 – comma-delimited version – Updated February 26, 2017
 Or just click this link: http://seanlahman.com/files/database/baseballdatabank-2017.1.zip
