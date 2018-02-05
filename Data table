@@ -1,0 +1,23 @@
+2.2 Batting Table
+playerID       Player ID code
+yearID         Year
+stint          player's stint (order of appearances within a season)
+teamID         Team
+lgID           League
+G              Games
+AB             At Bats
+R              Runs
+H              Hits
+2B             Doubles
+3B             Triples
+HR             Homeruns
+RBI            Runs Batted In
+SB             Stolen Bases
+CS             Caught Stealing
+BB             Base on Balls
+SO             Strikeouts
+IBB            Intentional walks
+HBP            Hit by pitch
+SH             Sacrifice hits
+SF             Sacrifice flies
+GIDP           Grounded into double plays
