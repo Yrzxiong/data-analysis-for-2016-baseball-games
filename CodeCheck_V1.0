@@ -1,3 +1,13 @@
+Summary: Still confused by a lot of definitions.
+  10 OBP
+  11 PA
+  13 MLB?
+  14 Is 'game' means one 'season'? Or means include 'stint'
+  17 PA
+  21 OBP
+  22 OBP
+  23 league average HRs?
+
 #3) How many players have hit 40 or more HRs in one single season? (Number only)
   Wrong. There are duplicates since player may hit 40 or more HRs in more than one season.
   Correct Answer:                            
@@ -78,4 +88,6 @@
 
 #22)
   Wrong. OBP
-  
+  g = df[(df['yearID']== 1997)& (df['lgID']=='NL')]
+  g['OBP'] = (g['H']+g['BB']+g['IBB']+g['SH']+g['SF'])/g['AB']
+  pd.merge(playerInfo,g.sort_values('OBP'))[['playerID','yearID','lgID','OBP']][-1:]
