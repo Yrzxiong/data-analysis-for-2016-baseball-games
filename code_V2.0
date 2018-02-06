@@ -13,11 +13,10 @@ df.head()
 df.info()
 playerInfo = df[['playerID','nameFirst','nameLast','birthYear']].drop_duplicates()
 df['PA']=df['AB']+df['BB']+df['IBB']+df['SH']+df['SF']
-df['OBP'] = (df['H']+df['BB']+df['IBB']+df['SH']+df['SF'])/df['AB']
-df['Average'] = df['H']/df['AB']
+
 #3) How many players have hit 40 or more HRs in one single season? (Number only)¶
 g_SumSeason = df.groupby(['playerID', 'yearID'], as_index = False).sum()    # sort by player and season                                      # the sum of each season per player
-len(g_SumSeason[g_SumSeason['HR']>=40])                            # the number of players who hit 40 or more HRs per season
+len(g_SumSeason[g_SumSeason['HR']>=40].drop_duplicates('playerID'))                            # the number of players who hit 40 or more HRs per season
 
 #4) How many players have hit more than 600 HRs for their career? (Dataframe)
 g_SumID = df.groupby('playerID', as_index = False).sum()                    # sort by player
@@ -27,36 +26,37 @@ pd.merge(playerInfo,g)
 
 #5)	How many players have hit 40 2Bs, 10 3Bs,
 # 200 Hits, and 30 HRs (inclusive) in one season? (Number Only)
-len(g_SumSeason[(g_SumSeason['2B']>=40) & (g_SumSeason['3B']>=10) &(g_SumSeason['H']>=200) &(g_SumSeason['HR']>=30)])
+len(g_SumSeason[(g_SumSeason['2B']>=40) & (g_SumSeason['3B']>=10) &(g_SumSeason['H']>=200) &(g_SumSeason['HR']>=30)].drop_duplicates('playerID'))
 
 #6)	How many players have had 100 or more SBs in a season? (Dataframe)
-g = g_SumSeason[g_SumSeason['SB']>=100][['playerID','yearID']]
+g = g_SumSeason[g_SumSeason['SB']>=100][['playerID']].drop_duplicates('playerID')
 pd.merge(playerInfo,g)
 
 #7)	How many players in the 1960s have hit more than 200 HRs? (Dataframe)
-g_1960sHRs = g_SumSeason[(g_SumSeason['yearID']>=1960)& (g_SumSeason['yearID']<1970)].groupby('playerID',as_index = False).sum()[['playerID','HR','yearID','stint']]
-g = g_1960sHRs[g_1960sHRs['HR']>200]                              # players who had hit more than 200 HRs
-g.columns = ['playerID','1960s_HRs','yearID']
-pd.merge(playerInfo,g)
+g = df[(df['yearID'] >=1960) & (df['yearID'] <1970)].groupby('playerID',as_index = False).sum()[['playerID','HR']]
+g.columns=['playerID','Total_HR']
+g[g['Total_HR']>200].merge(playerInfo)
 
 #8)	Who has hit the most HRs in history? (Dataframe)
-g = g_SumID[g_SumID['HR'] == max(g_SumID['HR'])][['playerID','HR']]                    # player who had the most HRs
-g.columns = ['playerID','Total_HRs']
-pd.merge(playerInfo, g)
+df[df['HR']== max(df['HR'])]
 
 #9)	Who had the most hits in the 1970s? (Dataframe)
-g_1970sHs = g_SumSeason[(g_SumSeason['yearID']>=1970)& (g_SumSeason['yearID']<1980)].groupby('playerID',as_index = False).sum()[['playerID','H']]
-g = g_1970sHs[g_1970sHs['H']==max(g_1970sHs['H'])]                              # players who had hit more than 200 HRs
-g.columns = ['playerID','1970s_Hs']
-pd.merge(playerInfo,g)
+g = df[(df['yearID']>=1970) & (df['yearID']<1980)]
+g[g['H']== max(g['H'])]
 
 #10)	Top 5 highest OBP (on base percentage) with at least 500 PAs in 1977?  (Dataframe)
+# OBP cumlate
 g = g_SumSeason[(g_SumSeason['yearID'] == 1977) & (g_SumSeason['PA']>= 500)][['playerID','yearID','PA','OBP']]
 pd.merge(playerInfo,g.sort_values('OBP')[-5:]).sort_values('OBP',ascending = False)
+# otherwise
+g = g_SumSeason[(g_SumSeason['yearID'] == 1977) & (g_SumSeason['PA']>= 500)]
+g['OBP'] = (g['H']+g['BB']+g['IBB']+g['SH']+g['SF'])/g['AB']
+pd.merge(playerInfo,g[['playerID','yearID','PA','OBP']].sort_values('OBP')[-5:]).sort_values('OBP',ascending = False)
 
 #11)	Top 8 highest averages in 2013 with at least 300 PAs? (Dataframe)
-g = g_SumSeason[(g_SumSeason['yearID'] == 2013) & (g_SumSeason['PA']>= 300)][['playerID','yearID','PA','Average']]
-pd.merge(playerInfo,g.sort_values('Average')[-8:]).sort_values('Average',ascending = False)
+g = g_SumSeason[(g_SumSeason['yearID'] == 2013) & (g_SumSeason['PA']>= 300)]
+g['Average'] = g['H']/g['AB']
+pd.merge(playerInfo,g[['playerID','yearID','PA','Average']].sort_values('Average')[-8:]).sort_values('Average',ascending = False)
 
 #12)	Leaders in hits from 1940 up to and including 1949. (Dataframe)
 g = pd.DataFrame({'playerID' : []})
@@ -77,36 +77,41 @@ pd.merge(playerInfo,g.sort_values('Totel_played')[-5:])
 len(g_SumID[(g_SumID['H']>3000) & (g_SumID['HR']>=500)])
 
 #16) How many HRs were hit during the entire 1988 season? Just a number is okay here
-g_SumSeason[g_SumSeason['yearID']==1988]['HR'].sum()
+df[df['yearID'] == 1988]['HR'].sum()
 
 #17) Please filter out and show me the top 3 average seasons by Wade Boggs during his career in seasons in which he had at least 500 ABs. I would like a dataframe sorted by average
 player = playerInfo[(playerInfo['nameFirst']=='Wade') & (playerInfo['nameLast']=='Boggs')]
 g = g_SumSeason[g_SumSeason['playerID']==str(player['playerID']).split()[1]]
-g = g[g['AB']>=500].sort_values('Average',ascending = False)[:3]
+g = g[g['AB']>=500]
+g['Averge']= g['H']/g['AB']
+g = g.sort_values('Average',ascending = False)[:3]
 pd.merge(playerInfo,g[['playerID','AB','Average']]).sort_values('Average', ascending = False)
 
 #18) Please filter out the top OBPs for the 1995 season with at least 400 PAs, sorted by OBP. I would like a dataframe for this¶
-g = g_SumSeason[(g_SumSeason['yearID']==1995) & (g_SumSeason['PA']>=400)][['playerID','yearID','PA','OBP']]
-pd.merge(playerInfo,g).sort_values('OBP',ascending = False)
+g = g_SumSeason[(g_SumSeason['yearID']==1995) & (g_SumSeason['PA']>=400)]
+g['OBP'] = (g['H']+g['BB']+g['IBB']+g['SH']+g['SF'])/g['AB']
+pd.merge(playerInfo,g[['playerID','yearID','PA','OBP']]).sort_values('OBP',ascending = False)
 
 #19) Who had the most 3Bs (in total) in 1922, 1925, 1926, and 1928? I would like a dataframe with just the leader
 g = pd.DataFrame({'playerID' : []})
 for i in [1992,1925,1926,1928]:
-    g1 = g_SumSeason[g_SumSeason['yearID'] ==i]
-    g1 = g1[g1['3B']==max(g1['3B'])]
-    g = g.append(g1)
-    
-pd.merge(playerInfo,g[g['3B']==max(g['3B'])][['playerID','3B']])
+    g = g.append(g_SumSeason[g_SumSeason['yearID'] ==i][['playerID','3B']])
+g = g.groupby('playerID',as_index = False).sum()
+g.columns= ['playerID','Total_3Bs']
+pd.merge(playerInfo,g[g['Total_3Bs']==max(g['Total_3Bs'])])
 
 #20) How many players have hit 30 or more HRs in season while also stealing (SB) 30 more or bases? A number is okay here
-len(g_SumSeason[(g_SumSeason['HR']>=30) & (g_SumSeason['SB']>=30)])
+len(g_SumSeason[(g_SumSeason['HR']>=30) & (g_SumSeason['SB']>=30)].drop_duplicates('playerID'))
 
 #21) Who had the highest OBP is 1986 with at least 400 PAs? (Dataframe)
-pd.merge(playerInfo,g_SumSeason[(g_SumSeason['yearID']== 1986)& (g_SumSeason['PA']>=400)].sort_values('OBP')[['playerID','yearID','PA','OBP']][-1:])
+g = g_SumSeason[(g_SumSeason['yearID']== 1986)& (g_SumSeason['PA']>=400)]
+g['OBP'] = (g['H']+g['BB']+g['IBB']+g['SH']+g['SF'])/g['AB']
+pd.merge(playerInfo,g.sort_values('OBP')[['playerID','yearID','PA','OBP']][-1:])
 
 #22) Same question but for 1997 and only in the NL (check league ID)? (Dataframe)¶
-pd.merge(playerInfo,df[(df['yearID']== 1997)& (df['lgID']=='NL')][['playerID','yearID','lgID','OBP']].replace([np.inf, -np.inf], np.nan).dropna(axis = 0, how = 'any').sort_values('OBP')[-1:])
-
+g = df[(df['yearID']== 1997)& (df['lgID']=='NL')]
+g['OBP'] = (g['H']+g['BB']+g['IBB']+g['SH']+g['SF'])/g['AB']
+pd.merge(playerInfo,g.sort_values('OBP'))[['playerID','yearID','lgID','OBP']][-1:]
 #23) Who had more than the league average HRs in 2012 (filter out all players with less 500 PAs)? (Dataframe)
 g_MeanLeague = df[df['yearID'] == 2012].groupby('lgID', as_index = False).mean()[['lgID','HR']]
 g_MeanLeague.columns = ['lgID','Average_HR']
@@ -123,4 +128,13 @@ pd.merge(playerInfo,g[g['birthYear']==max(g['birthYear'])][['playerID','HR']])
 #25) Who are the five youngest players to hit 300 or more HRs for their career? (Dataframe)¶
 g = g_SumID[g_SumID['HR']>=300][['playerID','HR']]
 g.columns = ['playerID','Total_HR']
-g.merge(playerInfo).sort_values('birthYear',ascending = False)[:8]
+g = g.merge(playerInfo).sort_values('birthYear',ascending = False)
+for i in range(len(g)):
+    if i < 5:
+        pass
+    else:
+        if (g.iloc[i]['birthYear'] !=g.iloc[i+1]['birthYear']):
+            break;
+        else:
+            pass
+g[:i+1] # include players born in the same year.
