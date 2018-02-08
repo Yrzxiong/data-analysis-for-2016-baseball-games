@@ -42,6 +42,11 @@ Summary: Still confused by a lot of definitions.
   Correct Answer:
   g = df[(df['yearID']>=1970) & (df['yearID']<1980)]
   g[g['H']== max(g['H'])]
+  ---------
+  Correct Answer:
+  g = df[(df['yearID']>=1970) & (df['yearID']<1980)].groupby('playerID').sum()
+  g.columns = ['playerID','Total_H']
+  playerInfo.merge(g)
   
 #10) Top 5 highest OBP (on base percentage) with at least 500 PAs in 1977? (Dataframe)
   Wrong. OBP is not calculate by cumulate.
@@ -56,7 +61,21 @@ Summary: Still confused by a lot of definitions.
   pd.merge(playerInfo,g[['playerID','yearID','PA','Average']].sort_values('Average')[-8:]).sort_values('Average',ascending = False)
 
 #13) Who led MLB with the most hits the most times? And how many times? (Dataframe, Number)
-  What is MLB...
+  Answer:
+  g = pd.DataFrame({'playerID' : []})
+  for i in set(df['yearID']):
+      g1 = g_SumSeason[g_SumSeason['yearID']==i]
+      g=g.append(g1[g1['H']==max(g1['H'])][['playerID','yearID','H']])
+  g = g.groupby('playerID',as_index = False).count()[['playerID','H']]
+  g.columns = ['playerID','Times_of_most_Hits']
+  g.sort_values('Times_of_most_Hits')[-1:]
+
+#14)
+  'G' for games.
+  Answer:
+  g = g_SumID[['playerID','G']]
+  g.columns = ['playerID','Total_played']
+  pd.merge(playerInfo,g.sort_values('Total_played')[-5:]).sort_values('Total_played')[::-1]
   
 #17)
   Wrong.
@@ -70,7 +89,7 @@ Summary: Still confused by a lot of definitions.
 #19)
   Wrong.
   g = pd.DataFrame({'playerID' : []})
-  for i in [1992,1925,1926,1928]:
+  for i in [1922,1925,1926,1928]:
     g = g.append(g_SumSeason[g_SumSeason['yearID'] ==i][['playerID','3B']])
   g = g.groupby('playerID',as_index = False).sum()
   g.columns= ['playerID','Total_3Bs']
