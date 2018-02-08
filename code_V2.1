@@ -41,14 +41,12 @@ g[g['Total_HR']>200].merge(playerInfo)
 df[df['HR']== max(df['HR'])]
 
 #9)	Who had the most hits in the 1970s? (Dataframe)
-g = df[(df['yearID']>=1970) & (df['yearID']<1980)]
-g[g['H']== max(g['H'])]
+g = df[(df['yearID']>=1970) & (df['yearID']<1980)].groupby('playerID').sum()
+g.columns = ['playerID','Total_H']
+playerInfo.merge(g)
 
 #10)	Top 5 highest OBP (on base percentage) with at least 500 PAs in 1977?  (Dataframe)
 # OBP cumlate
-g = g_SumSeason[(g_SumSeason['yearID'] == 1977) & (g_SumSeason['PA']>= 500)][['playerID','yearID','PA','OBP']]
-pd.merge(playerInfo,g.sort_values('OBP')[-5:]).sort_values('OBP',ascending = False)
-# otherwise
 g = g_SumSeason[(g_SumSeason['yearID'] == 1977) & (g_SumSeason['PA']>= 500)]
 g['OBP'] = (g['H']+g['BB']+g['IBB']+g['SH']+g['SF'])/g['AB']
 pd.merge(playerInfo,g[['playerID','yearID','PA','OBP']].sort_values('OBP')[-5:]).sort_values('OBP',ascending = False)
@@ -67,11 +65,19 @@ for i in np.arange(1940, 1950):
 pd.merge(playerInfo,g).sort_values('yearID')
 
 #13)	Who led MLB with the most hits the most times?  And how many times?  (Dataframe, Number)
+g = pd.DataFrame({'playerID' : []})
+for i in set(df['yearID']):
+    g1 = g_SumSeason[g_SumSeason['yearID']==i]
+    g=g.append(g1[g1['H']==max(g1['H'])][['playerID','yearID','H']])
+g = g.groupby('playerID',as_index = False).count()[['playerID','H']]
+g.columns = ['playerID','Times_of_most_Hits']
+g.sort_values('Times_of_most_Hits')[-1:]
+    #g[i] = g1.max()['playerID']
 
 #14) Which players have played the most games for their careers? Top 5, descending by games played presented as a dataframe
-g = df.groupby('playerID',as_index = False).count()[['playerID','yearID']]
-g.columns = ['playerID','Totel_played']
-pd.merge(playerInfo,g.sort_values('Totel_played')[-5:])
+g = g_SumID[['playerID','G']]
+g.columns = ['playerID','Total_played']
+pd.merge(playerInfo,g.sort_values('Total_played')[-5:]).sort_values('Total_played')[::-1]
 
 #15) How many players have had more than 3000 hits for their careers while also hitting 500 or more HRs? Just a number is okay here
 len(g_SumID[(g_SumID['H']>3000) & (g_SumID['HR']>=500)])
@@ -83,9 +89,9 @@ df[df['yearID'] == 1988]['HR'].sum()
 player = playerInfo[(playerInfo['nameFirst']=='Wade') & (playerInfo['nameLast']=='Boggs')]
 g = g_SumSeason[g_SumSeason['playerID']==str(player['playerID']).split()[1]]
 g = g[g['AB']>=500]
-g['Averge']= g['H']/g['AB']
+g['Average']= g['H']/g['AB']
 g = g.sort_values('Average',ascending = False)[:3]
-pd.merge(playerInfo,g[['playerID','AB','Average']]).sort_values('Average', ascending = False)
+pd.merge(playerInfo,g[['playerID','AB','Average','yearID']]).sort_values('Average', ascending = False)
 
 #18) Please filter out the top OBPs for the 1995 season with at least 400 PAs, sorted by OBP. I would like a dataframe for this¶
 g = g_SumSeason[(g_SumSeason['yearID']==1995) & (g_SumSeason['PA']>=400)]
@@ -94,7 +100,7 @@ pd.merge(playerInfo,g[['playerID','yearID','PA','OBP']]).sort_values('OBP',ascen
 
 #19) Who had the most 3Bs (in total) in 1922, 1925, 1926, and 1928? I would like a dataframe with just the leader
 g = pd.DataFrame({'playerID' : []})
-for i in [1992,1925,1926,1928]:
+for i in [1922,1925,1926,1928]:
     g = g.append(g_SumSeason[g_SumSeason['yearID'] ==i][['playerID','3B']])
 g = g.groupby('playerID',as_index = False).sum()
 g.columns= ['playerID','Total_3Bs']
@@ -138,3 +144,8 @@ for i in range(len(g)):
         else:
             pass
 g[:i+1] # include players born in the same year.
+
+temp = df.groupby(['playerID','birthYear']).sum()
+temp = temp[temp['HR'] >= 300]
+temp = temp.reset_index('birthYear')
+temp.sort_values('birthYear')[:5]
