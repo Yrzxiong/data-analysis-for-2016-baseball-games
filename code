@@ -11,6 +11,7 @@ import numpy as np
 df = pd.read_csv('Batting.csv')
 df.head()
 df.info()
+df.ndim()
 playerInfo = df[['playerID','nameFirst','nameLast','birthYear']].drop_duplicates()
 df['PA']=df['AB']+df['BB']+df['IBB']+df['SH']+df['SF']
 
@@ -38,10 +39,11 @@ g.columns=['playerID','Total_HR']
 g[g['Total_HR']>200].merge(playerInfo)
 
 #8)	Who has hit the most HRs in history? (Dataframe)
-df[df['HR']== max(df['HR'])]
+#df[df['HR']== max(df['HR'])]
+playerInfo.merge(g_SumSeason[g_SumSeason['HR'] == max(g_SumSeason['HR'])][['playerID','HR']])
 
 #9)	Who had the most hits in the 1970s? (Dataframe)
-g = df[(df['yearID']>=1970) & (df['yearID']<1980)].groupby('playerID').sum()
+g = df[(df['yearID']>=1970) & (df['yearID']<1980)].groupby('playerID',as_index = False).sum()[['playerID','H']].sort_values('H',ascending = False)[:1]
 g.columns = ['playerID','Total_H']
 playerInfo.merge(g)
 
@@ -144,8 +146,3 @@ for i in range(len(g)):
         else:
             pass
 g[:i+1] # include players born in the same year.
-
-temp = df.groupby(['playerID','birthYear']).sum()
-temp = temp[temp['HR'] >= 300]
-temp = temp.reset_index('birthYear')
-temp.sort_values('birthYear')[:5]
