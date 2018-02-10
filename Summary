@@ -8,3 +8,17 @@ This project is most about groupby function, nothing else. But do this project a
 
 
 2/9/2018 21:40
+
+What I can do:
+
+Info on unique values:
+  series.unique()
+  series.nunique()
+  series.value_counts()
+
+Apply function:
+  series.apply(func)
+  
+  
+pivot_table:
+  df.pivot_table()
